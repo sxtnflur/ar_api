@@ -52,10 +52,10 @@ async def send_media(
         )
 
     photo_url: str = await file_storage.save_file_get_url(
-        file=photo.read(), filename=photo.filename
+        file=await photo.read(), filename=photo.filename
     )
     video_url: str = await file_storage.save_file_get_url(
-        file=video.read(), filename=video.filename
+        file=await video.read(), filename=video.filename
     )
 
     return SaveFilesResponse(

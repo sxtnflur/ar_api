@@ -24,7 +24,7 @@ class FileStorage:
     async def __save_file_get_path(self, file: bytes, filename: str) -> str:
         file_path = os.path.join(BASE_DIR, self.dir_path, filename)
         print(f'{file_path=}')
-        async with aiofiles.open(file_path, "w") as f:
+        async with aiofiles.open(file_path, "wb") as f:
             await f.write(file)
         return file_path
 
