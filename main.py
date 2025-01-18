@@ -1,8 +1,36 @@
 from depends import FileStorageAnnotated
 from fastapi import FastAPI, UploadFile, HTTPException
 from schemas import SaveFilesResponse
+from starlette.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
+
+origins = [
+            "http://localhost",
+            "http://127.0.0.1",
+            "http://127.0.0.1:4000",
+            "http://localhost:4000",
+            "http://185.87.192.139:4000",
+            "https://dinocarbone.ru"
+        ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Set-Cookie",
+        "Access-Control-Allow-Credentials",
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Methods",
+    ],
+)
+
+
 
 
 @app.post("/send_media")
