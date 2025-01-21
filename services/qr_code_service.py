@@ -5,7 +5,6 @@ import qrcode
 
 
 class QrCodeServiceProtocol(Protocol):
-
     async def create_qr_code(self, payload: str) -> bytes:
         ...
 

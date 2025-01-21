@@ -4,3 +4,7 @@ aiofiles
 uvicorn
 python-multipart
 asyncpg
+sqlalchemy
+segno
+qrcode
+asyncpg
