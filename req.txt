@@ -3,3 +3,4 @@ python-dotenv
 aiofiles
 uvicorn
 python-multipart
+asyncpg
