@@ -1,10 +1,9 @@
 from configuration.server import Server
 from fastapi import FastAPI
 
-def create_app(_=None):
+def create_app(_=None) -> FastAPI:
     return Server(FastAPI(
-        title="DinoCarbone",
-        version="0.1",
-        root_path="/api",
-        max_request_body_size=10 * 1024 * 1024)
+        root_path="/api_game",
+        openapi_url="/openapi"
+        )
     ).get_app()

@@ -6,7 +6,7 @@ from schemas.media_collections import CollectionResponse, CreatedCollectionRespo
 from sqlalchemy import select, insert, delete, update
 from db.models import MediaBlock, Collection
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, load_only
 
 
 class MediaCollectionsRepositoryProtocol(Protocol):
@@ -18,6 +18,9 @@ class MediaCollectionsRepositoryProtocol(Protocol):
 
     async def get_collections_by_user(self, telegram_user_id: int,
                                       offset: int = 0, limit: int = 10) -> list[CreatedCollectionResponse]:
+        ...
+
+    async def get_collection_media_block(self, collection_uuid: str) -> list[MediaBlockSchema]:
         ...
 
     async def get_media_block(self, media_block_uuid: str) -> MediaBlockSchema:
@@ -84,6 +87,19 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
         )
         collections = await self.session.scalars(stmt)
         return [CreatedCollectionResponse.from_orm(c) for c in collections]
+
+    async def get_collection_media_block(self, collection_uuid: str) -> list[MediaBlockSchema]:
+        stmt = (
+            select(MediaBlock)
+            .options(
+                load_only(MediaBlock.uuid, MediaBlock.photo_url, MediaBlock.video_url)
+            )
+            .where(MediaBlock.collection_uuid == collection_uuid)
+            .order_by(MediaBlock.created_at.desc())
+        )
+        blocks = await self.session.scalars(stmt)
+        return [MediaBlockSchema.from_orm(b) for b in blocks]
+
 
     async def get_media_block(self, media_block_uuid: str) -> MediaBlockSchema:
         stmt = (

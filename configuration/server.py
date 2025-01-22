@@ -13,6 +13,7 @@ class Server:
         self.__register_middlewares(app)
         self.__register_routers(app)
         self.__register_exceptions(app)
+        self.__register_openapi_json(app)
 
     def get_app(self):
         return self.__app
@@ -29,7 +30,8 @@ class Server:
             "http://127.0.0.1:8080",
             "http://localhost:8080",
 
-            "http://95.183.9.238:8080"
+            "http://95.183.9.238:8080",
+            "https://dinocarbone.ru"
         ]
         app.add_middleware(
             CORSMiddleware,
@@ -50,3 +52,14 @@ class Server:
     @staticmethod
     def __register_exceptions(app):
         register_errors(app)
+
+
+    @staticmethod
+    def __register_openapi_json(app: FastAPI):
+        def get_open_api() -> dict:
+            print("OK")
+            schema = app.openapi()
+            print(f'{schema=}')
+            return schema
+
+        app.get("/api_game/openapi.json")(get_open_api)

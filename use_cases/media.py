@@ -4,7 +4,7 @@ from db.repositories import MediaCollectionsRepositoryProtocol
 from db.unit_of_work import UnitOfWorkProtocol
 from schemas.media_collections import (
     CreatedCollectionResponse, CreatedMediaBlockResponse,
-    MediaBlockPatches, CollectionResponse
+    MediaBlockPatches, CollectionResponse, MediaBlock
 )
 from services import FileStorageServiceProtocol
 from services import TelegramUtilsServiceProtocol
@@ -46,6 +46,8 @@ class MediaUseCaseProtocol(Protocol):
                                    limit: int = 10) -> list[CreatedCollectionResponse]:
         ...
 
+    async def get_collection_media_blocks(self, collection_uuid: str) -> list[MediaBlock]:
+        ...
 
 class MediaUseCase(MediaUseCaseProtocol):
     def __init__(self,
@@ -180,3 +182,8 @@ class MediaUseCase(MediaUseCaseProtocol):
                 offset=offset, limit=limit
             )
         return collections
+
+    async def get_collection_media_blocks(self, collection_uuid: str) -> list[MediaBlock]:
+        async with self.uow as uow:
+            blocks = await uow.media_collections.get_collection_media_block(collection_uuid)
+        return blocks

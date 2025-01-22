@@ -3,7 +3,8 @@ from typing import Annotated
 from depends import MediaUseCaseAnnotated, CurrentUserAnnotated
 from fastapi import APIRouter, UploadFile, Body, Query
 from schemas.api import BaseResponse
-from schemas.media_collections import CollectionResponse, CreatedCollectionResponse, CreatedMediaBlockResponse
+from schemas.media_collections import CollectionResponse, CreatedCollectionResponse, CreatedMediaBlockResponse, \
+    MediaBlock
 from uuid import UUID
 
 router = APIRouter(prefix="/collections", tags=["Коллекции"])
@@ -132,3 +133,12 @@ async def patch_block(
     return BaseResponse(
         message="Данные медиа-блока обновлены"
     )
+
+
+
+@router.get("/{collection_uuid}/only_blocks")
+async def get_collection_blocks(
+    collection_uuid: UUID,
+    media_use_case: MediaUseCaseAnnotated
+) -> list[MediaBlock]:
+    return await media_use_case.get_collection_media_blocks(collection_uuid)

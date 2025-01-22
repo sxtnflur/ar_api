@@ -8,3 +8,4 @@ sqlalchemy
 segno
 qrcode
 asyncpg
+PyJWT
