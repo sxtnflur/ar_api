@@ -43,7 +43,7 @@ class MediaUseCaseProtocol(Protocol):
 
     async def get_user_collections(self, telegram_user_id: int,
                                    offset: int = 0,
-                                   limit: int = 10) -> list[CreatedCollectionResponse]:
+                                   limit: int = 10) -> list[CollectionResponse]:
         ...
 
     async def get_collection_media_blocks(self, collection_uuid: str) -> list[MediaBlock]:
@@ -175,7 +175,7 @@ class MediaUseCase(MediaUseCaseProtocol):
         return collection
 
     async def get_user_collections(self, telegram_user_id: int,
-                                   offset: int = 0, limit: int = 10) -> list[CreatedCollectionResponse]:
+                                   offset: int = 0, limit: int = 10) -> list[CollectionResponse]:
         async with self.uow as uow:
             collections = await uow.media_collections.get_collections_by_user(
                 telegram_user_id=telegram_user_id,

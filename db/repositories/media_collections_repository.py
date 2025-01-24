@@ -17,7 +17,7 @@ class MediaCollectionsRepositoryProtocol(Protocol):
         ...
 
     async def get_collections_by_user(self, telegram_user_id: int,
-                                      offset: int = 0, limit: int = 10) -> list[CreatedCollectionResponse]:
+                                      offset: int = 0, limit: int = 10) -> list[CollectionResponse]:
         ...
 
     async def get_collection_media_block(self, collection_uuid: str) -> list[MediaBlockSchema]:
@@ -78,15 +78,18 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
         return CollectionResponse.from_orm(collection)
 
     async def get_collections_by_user(self, telegram_user_id: int,
-                                      offset: int = 0, limit: int = 10) -> list[CreatedCollectionResponse]:
+                                      offset: int = 0, limit: int = 10) -> list[CollectionResponse]:
         stmt = (
             select(Collection)
+            .options(
+                selectinload(Collection.blocks)
+            )
             .where(Collection.telegram_user_id == telegram_user_id)
             .order_by(Collection.created_at.desc())
             .offset(offset).limit(limit)
         )
         collections = await self.session.scalars(stmt)
-        return [CreatedCollectionResponse.from_orm(c) for c in collections]
+        return [CollectionResponse.from_orm(c) for c in collections]
 
     async def get_collection_media_block(self, collection_uuid: str) -> list[MediaBlockSchema]:
         stmt = (
