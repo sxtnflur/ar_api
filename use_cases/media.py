@@ -15,7 +15,7 @@ from urllib.parse import quote
 
 class MediaUseCaseProtocol(Protocol):
 
-    async def create_collection(self, telegram_user_id: int, name: str) -> CreatedCollectionResponse:
+    async def create_collection(self, telegram_user_id: int, name: str) -> CollectionResponse:
         ...
 
     async def add_media_block_to_collection(self,
@@ -62,7 +62,7 @@ class MediaUseCase(MediaUseCaseProtocol):
         self.telegram_utils_service = telegram_utils_service
         self.qr_code_service = qr_code_service
 
-    async def create_collection(self, telegram_user_id: int, name: str) -> CreatedCollectionResponse:
+    async def create_collection(self, telegram_user_id: int, name: str) -> CollectionResponse:
         async with self.uow as uow:
             # Создание коллекции
             collection_uuid: UUID = await uow.media_collections.create_collection(
@@ -91,7 +91,7 @@ class MediaUseCase(MediaUseCaseProtocol):
                 )
             )
 
-        return CreatedCollectionResponse(
+        return CollectionResponse(
             uuid=collection_uuid,
             name=name,
             startup_url=startup_url,

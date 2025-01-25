@@ -86,7 +86,7 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
                 selectinload(Collection.blocks)
             )
             .where(Collection.telegram_user_id == telegram_user_id)
-            .order_by(Collection.created_at.desc())
+            .order_by(Collection.created_at.asc())
             .offset(offset).limit(limit)
         )
         collections = await self.session.scalars(stmt)

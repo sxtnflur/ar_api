@@ -15,7 +15,7 @@ async def create_collection(
     name: Annotated[str, Body(embed=True)],
     current_user: CurrentUserAnnotated,
     media_use_case: MediaUseCaseAnnotated
-) -> CreatedCollectionResponse:
+) -> CollectionResponse:
     return await media_use_case.create_collection(
         telegram_user_id=current_user.telegram_id, name=name
     )
