@@ -103,10 +103,14 @@ class MediaUseCase(MediaUseCaseProtocol):
                                             video: bytes,
                                             telegram_user_id: int) -> CreatedMediaBlockResponse:
         photo_url: str = await self.file_storage_service.save_file_get_url(
-            file=photo
+            file=photo, filename=self.file_storage_service.format_filename(
+                user_id=telegram_user_id, file_type=self.file_storage_service.file_types.photo
+            )
         )
         video_url: str = await self.file_storage_service.save_file_get_url(
-            file=video
+            file=video, filename=self.file_storage_service.format_filename(
+                user_id=telegram_user_id, file_type=self.file_storage_service.file_types.video
+            )
         )
         async with self.uow as uow:
             block_uuid: UUID = await uow.media_collections.add_media_block_to_collection(
@@ -124,12 +128,16 @@ class MediaUseCase(MediaUseCaseProtocol):
         updates = {}
         if video:
             video_url = await self.file_storage_service.save_file_get_url(
-                file=video
+                file=video, filename=self.file_storage_service.format_filename(
+                user_id=telegram_user_id, file_type=self.file_storage_service.file_types.video
+            )
             )
             updates.update(video_url=video_url)
         if photo:
             photo_url = await self.file_storage_service.save_file_get_url(
-                file=photo
+                file=photo, filename=self.file_storage_service.format_filename(
+                user_id=telegram_user_id, file_type=self.file_storage_service.file_types.photo
+            )
             )
             updates.update(photo_url=photo_url)
 
