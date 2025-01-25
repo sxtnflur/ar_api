@@ -43,7 +43,7 @@ async def get_my_collections(
     current_user: CurrentUserAnnotated,
     media_use_case: MediaUseCaseAnnotated,
     offset: int = Query(default=0, ge=0),
-    limit: int = Query(default=10, ge=1)
+    limit: int = Query(default=None, ge=1)
 ) -> list[CollectionResponse]:
     return await media_use_case.get_user_collections(
         telegram_user_id=current_user.telegram_id,
