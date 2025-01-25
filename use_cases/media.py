@@ -1,4 +1,5 @@
 from typing import Protocol
+from uuid import UUID
 
 from db.repositories import MediaCollectionsRepositoryProtocol
 from db.unit_of_work import UnitOfWorkProtocol
@@ -18,25 +19,25 @@ class MediaUseCaseProtocol(Protocol):
         ...
 
     async def add_media_block_to_collection(self,
-                                            collection_uuid: str,
+                                            collection_uuid: UUID,
                                             photo: bytes,
                                             video: bytes,
                                             telegram_user_id: int) -> CreatedMediaBlockResponse:
         ...
 
-    async def patch_media_block(self, block_uuid: str, telegram_user_id: int,
+    async def patch_media_block(self, block_uuid: UUID, telegram_user_id: int,
                                 video: bytes | None = None, photo: bytes | None = None) -> None:
         ...
 
-    async def delete_collection(self, collection_uuid: str, telegram_user_id: int) -> None:
+    async def delete_collection(self, collection_uuid: UUID, telegram_user_id: int) -> None:
         ...
 
-    async def delete_media_block(self, block_uuid: str, telegram_user_id: int) -> None:
+    async def delete_media_block(self, block_uuid: UUID, telegram_user_id: int) -> None:
         ...
 
-    async def update_collection_name(self, collection_uuid: str, telegram_user_id: int, name: str) -> None:
+    async def update_collection_name(self, collection_uuid: UUID, telegram_user_id: int, name: str) -> None:
         ...
-    async def get_collection(self, collection_uuid: str,
+    async def get_collection(self, collection_uuid: UUID,
                              media_blocks_offset: int = 0,
                              media_blocks_limit: int | None = None) -> CollectionResponse:
         ...
@@ -46,7 +47,7 @@ class MediaUseCaseProtocol(Protocol):
                                    limit: int = 10) -> list[CollectionResponse]:
         ...
 
-    async def get_collection_media_blocks(self, collection_uuid: str) -> list[MediaBlock]:
+    async def get_collection_media_blocks(self, collection_uuid: UUID) -> list[MediaBlock]:
         ...
 
 class MediaUseCase(MediaUseCaseProtocol):
@@ -64,7 +65,7 @@ class MediaUseCase(MediaUseCaseProtocol):
     async def create_collection(self, telegram_user_id: int, name: str) -> CreatedCollectionResponse:
         async with self.uow as uow:
             # Создание коллекции
-            collection_uuid: str = await uow.media_collections.create_collection(
+            collection_uuid: UUID = await uow.media_collections.create_collection(
                 name=name, telegram_user_id=telegram_user_id
             )
 
@@ -92,11 +93,12 @@ class MediaUseCase(MediaUseCaseProtocol):
 
         return CreatedCollectionResponse(
             uuid=collection_uuid,
+            name=name,
             startup_url=startup_url,
             qr_code_url=qr_code_url
         )
 
-    async def add_media_block_to_collection(self, collection_uuid: str,
+    async def add_media_block_to_collection(self, collection_uuid: UUID,
                                             photo: bytes,
                                             video: bytes,
                                             telegram_user_id: int) -> CreatedMediaBlockResponse:
@@ -107,7 +109,7 @@ class MediaUseCase(MediaUseCaseProtocol):
             file=video
         )
         async with self.uow as uow:
-            block_uuid: str = await uow.media_collections.add_media_block_to_collection(
+            block_uuid: UUID = await uow.media_collections.add_media_block_to_collection(
                 collection_uuid=collection_uuid, telegram_user_id=telegram_user_id,
                 photo_url=photo_url, video_url=video_url
             )
@@ -117,7 +119,7 @@ class MediaUseCase(MediaUseCaseProtocol):
             id=block_uuid
         )
 
-    async def patch_media_block(self, block_uuid: str, telegram_user_id: int,
+    async def patch_media_block(self, block_uuid: UUID, telegram_user_id: int,
                                 video: bytes | None = None, photo: bytes | None = None) -> None:
         updates = {}
         if video:
@@ -145,25 +147,25 @@ class MediaUseCase(MediaUseCaseProtocol):
         if photo:
             await self.file_storage_service.delete_file_by_url(url=block.photo_url)
 
-    async def delete_collection(self, collection_uuid: str, telegram_user_id: int) -> None:
+    async def delete_collection(self, collection_uuid: UUID, telegram_user_id: int) -> None:
         async with self.uow as uow:
             await uow.media_collections.delete_collection(
                 collection_uuid, telegram_user_id
             )
 
-    async def delete_media_block(self, block_uuid: str, telegram_user_id: int) -> None:
+    async def delete_media_block(self, block_uuid: UUID, telegram_user_id: int) -> None:
         async with self.uow as uow:
             await uow.media_collections.delete_media_block(
                 media_block_uuid=block_uuid, telegram_user_id=telegram_user_id
             )
 
-    async def update_collection_name(self, collection_uuid: str, telegram_user_id: int, name: str) -> None:
+    async def update_collection_name(self, collection_uuid: UUID, telegram_user_id: int, name: str) -> None:
         async with self.uow as uow:
             await uow.media_collections.update_collection_name(
                 collection_uuid, telegram_user_id, name
             )
 
-    async def get_collection(self, collection_uuid: str,
+    async def get_collection(self, collection_uuid: UUID,
                              media_blocks_offset: int = 0,
                              media_blocks_limit: int | None = None) -> CollectionResponse:
         async with self.uow as uow:
@@ -183,7 +185,7 @@ class MediaUseCase(MediaUseCaseProtocol):
             )
         return collections
 
-    async def get_collection_media_blocks(self, collection_uuid: str) -> list[MediaBlock]:
+    async def get_collection_media_blocks(self, collection_uuid: UUID) -> list[MediaBlock]:
         async with self.uow as uow:
             blocks = await uow.media_collections.get_collection_media_block(collection_uuid)
         return blocks

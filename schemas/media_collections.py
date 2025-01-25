@@ -34,7 +34,7 @@ class CollectionResponse(CreatedCollectionResponse):
 class CreatedMediaBlockResponse(BaseModel):
     photo_url: str
     video_url: str
-    id: str
+    id: UUID
 
 
 

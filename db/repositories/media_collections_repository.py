@@ -1,4 +1,5 @@
 from typing import Protocol
+from uuid import UUID
 
 from db.main import async_session
 from exceptions.core import EntityNotFound
@@ -11,7 +12,7 @@ from sqlalchemy.orm import selectinload, load_only
 
 class MediaCollectionsRepositoryProtocol(Protocol):
 
-    async def get_collection(self, collection_uuid: str,
+    async def get_collection(self, collection_uuid: UUID,
                                     media_blocks_offset: int = 0,
                                     media_blocks_limit: int | None = None) -> CollectionResponse:
         ...
@@ -20,35 +21,35 @@ class MediaCollectionsRepositoryProtocol(Protocol):
                                       offset: int = 0, limit: int = 10) -> list[CollectionResponse]:
         ...
 
-    async def get_collection_media_block(self, collection_uuid: str) -> list[MediaBlockSchema]:
+    async def get_collection_media_block(self, collection_uuid: UUID) -> list[MediaBlockSchema]:
         ...
 
-    async def get_media_block(self, media_block_uuid: str) -> MediaBlockSchema:
+    async def get_media_block(self, media_block_uuid: UUID) -> MediaBlockSchema:
         ...
 
     async def create_collection(self, name: str, telegram_user_id: int,
-                                startup_url: str | None = None, qr_code_url: str | None = None) -> str:
+                                startup_url: str | None = None, qr_code_url: str | None = None) -> UUID:
         ...
 
-    async def update_collection(self, collection_uuid: str, telegram_user_id: int,
+    async def update_collection(self, collection_uuid: UUID, telegram_user_id: int,
                                 updates: dict) -> None:
         ...
 
-    async def add_media_block_to_collection(self, collection_uuid: str, photo_url: str,
-                                            video_url: str, telegram_user_id: int) -> str:
+    async def add_media_block_to_collection(self, collection_uuid: UUID, photo_url: str,
+                                            video_url: str, telegram_user_id: int) -> UUID:
         ...
 
-    async def delete_collection(self, collection_uuid: str, telegram_user_id: int) -> None:
+    async def delete_collection(self, collection_uuid: UUID, telegram_user_id: int) -> None:
         ...
 
-    async def delete_media_block(self, media_block_uuid: str, telegram_user_id: int) -> None:
+    async def delete_media_block(self, media_block_uuid: UUID, telegram_user_id: int) -> None:
         ...
 
-    async def update_media_block(self, media_block_uuid: str, telegram_user_id: int,
+    async def update_media_block(self, media_block_uuid: UUID, telegram_user_id: int,
                                  updates: dict) -> None:
         ...
 
-    async def update_collection_name(self, collection_uuid: str, telegram_user_id: int,
+    async def update_collection_name(self, collection_uuid: UUID, telegram_user_id: int,
                                      name: str) -> None:
         ...
 
@@ -57,7 +58,7 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_collection(self, collection_uuid: str,
+    async def get_collection(self, collection_uuid: UUID,
                                       media_blocks_offset: int = 0,
                              media_blocks_limit: int | None = None) -> CollectionResponse:
         stmt = (
@@ -91,7 +92,7 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
         collections = await self.session.scalars(stmt)
         return [CollectionResponse.from_orm(c) for c in collections]
 
-    async def get_collection_media_block(self, collection_uuid: str) -> list[MediaBlockSchema]:
+    async def get_collection_media_block(self, collection_uuid: UUID) -> list[MediaBlockSchema]:
         stmt = (
             select(MediaBlock)
             .options(
@@ -104,16 +105,19 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
         return [MediaBlockSchema.from_orm(b) for b in blocks]
 
 
-    async def get_media_block(self, media_block_uuid: str) -> MediaBlockSchema:
+    async def get_media_block(self, media_block_uuid: UUID) -> MediaBlockSchema:
+        print(f'{media_block_uuid=}')
         stmt = (
             select(MediaBlock)
             .where(MediaBlock.uuid == media_block_uuid)
         )
-        block = await self.session.scalar(stmt)
+        block: MediaBlock | None = await self.session.scalar(stmt)
+        if not block:
+            raise EntityNotFound(entity="media_block", by_field="id")
         return MediaBlockSchema.from_orm(block)
 
     async def create_collection(self, name: str, telegram_user_id: int,
-                                startup_url: str | None = None, qr_code_url: str | None = None) -> str:
+                                startup_url: str | None = None, qr_code_url: str | None = None) -> UUID:
         stmt = (
             insert(Collection)
             .values(
@@ -122,11 +126,12 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
             )
             .returning(Collection.uuid)
         )
-        collection_uuid: str = await self.session.scalar(stmt)
+        collection_uuid: UUID = await self.session.scalar(stmt)
+        print(f'{collection_uuid=}')
         return collection_uuid
 
-    async def add_media_block_to_collection(self, collection_uuid: str, photo_url: str,
-                                            video_url: str, telegram_user_id: int) -> str:
+    async def add_media_block_to_collection(self, collection_uuid: UUID, photo_url: str,
+                                            video_url: str, telegram_user_id: int) -> UUID:
         stmt = (
             insert(MediaBlock)
             .values(
@@ -135,33 +140,33 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
             )
             .returning(MediaBlock.uuid)
         )
-        block_uuid: str = await self.session.scalar(stmt)
+        block_uuid: UUID = await self.session.scalar(stmt)
         return block_uuid
 
 
-    async def delete_collection(self, collection_uuid: str, telegram_user_id: int) -> None:
+    async def delete_collection(self, collection_uuid: UUID, telegram_user_id: int) -> None:
         stmt = (
             delete(Collection)
             .where(Collection.uuid == collection_uuid)
             .where(Collection.telegram_user_id == telegram_user_id)
             .returning(Collection.uuid)
         )
-        uuid: str | None = await self.session.scalar(stmt)
+        uuid: UUID | None = await self.session.scalar(stmt)
         if not uuid:
             raise EntityNotFound(entity="collection", by_field="id")
 
-    async def delete_media_block(self, media_block_uuid: str, telegram_user_id: int) -> None:
+    async def delete_media_block(self, media_block_uuid: UUID, telegram_user_id: int) -> None:
         stmt = (
             delete(MediaBlock)
             .where(MediaBlock.uuid == media_block_uuid)
             .where(Collection.telegram_user_id == telegram_user_id)
             .returning(MediaBlock.uuid)
         )
-        uuid: str | None = await self.session.scalar(stmt)
+        uuid: UUID | None = await self.session.scalar(stmt)
         if not uuid:
             raise EntityNotFound(entity="media_block", by_field="id")
 
-    async def update_media_block(self, media_block_uuid: str, telegram_user_id: int,
+    async def update_media_block(self, media_block_uuid: UUID, telegram_user_id: int,
                                  updates: dict) -> None:
         stmt = (
             update(MediaBlock)
@@ -173,11 +178,11 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
             .where(Collection.telegram_user_id == telegram_user_id)
             .returning(MediaBlock.uuid)
         )
-        uuid: str | None = await self.session.scalar(stmt)
+        uuid: UUID | None = await self.session.scalar(stmt)
         if not uuid:
             raise EntityNotFound(entity="media_block", by_field="id")
 
-    async def update_collection_name(self, collection_uuid: str, telegram_user_id: int,
+    async def update_collection_name(self, collection_uuid: UUID, telegram_user_id: int,
                                      name: str) -> None:
         stmt = (
             update(Collection)
@@ -186,11 +191,11 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
             .where(Collection.telegram_user_id == telegram_user_id)
             .returning(Collection.uuid)
         )
-        uuid: str | None = await self.session.scalar(stmt)
+        uuid: UUID | None = await self.session.scalar(stmt)
         if not uuid:
             raise EntityNotFound(entity="collection", by_field="id")
 
-    async def update_collection(self, collection_uuid: str, telegram_user_id: int,
+    async def update_collection(self, collection_uuid: UUID, telegram_user_id: int,
                                 updates: dict) -> None:
         stmt = (
             update(Collection)
@@ -199,6 +204,6 @@ class MediaCollectionRepository(MediaCollectionsRepositoryProtocol):
             .where(Collection.telegram_user_id == telegram_user_id)
             .returning(Collection.uuid)
         )
-        uuid: str | None = await self.session.scalar(stmt)
+        uuid: UUID | None = await self.session.scalar(stmt)
         if not uuid:
             raise EntityNotFound(entity="collection", by_field="id")
