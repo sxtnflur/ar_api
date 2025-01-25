@@ -58,4 +58,4 @@ class FileStorageService(FileStorageServiceProtocol):
         return await self.delete_file(filename=filename)
 
     def format_filename(self, user_id: int, file_type: FileType) -> str:
-        return f'{user_id}_{file_type}'
+        return f'{user_id}_{file_type.value}'
